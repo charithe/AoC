@@ -1,0 +1,8 @@
+[package]
+name = "day3"
+version = "0.1.0"
+authors = ["Charith Ellawala <cell@otiose.me>"]
+edition = "2018"
+
+[dependencies]
+nom = "4.2.0"
