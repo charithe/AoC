@@ -60,12 +60,10 @@ fn part2(id_list: &Vec<String>) {
                     println!("Common chars: {}", common_chars(&ids[n], &ids[i]));
                     return;
                 }
-                _ => {
-                    n = n + 1;
-                    continue 'outer;
-                }
+                _ => continue,
             }
         }
+        n = n + 1;
     }
 }
 
