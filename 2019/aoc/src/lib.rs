@@ -10,6 +10,8 @@ pub enum Error {
     ParseIntError(num::ParseIntError),
     ToStringError(std::string::FromUtf8Error),
     BadOpCode(i32),
+    BadParamMode(i32),
+    ExecError,
     NomParseError,
 }
 
@@ -26,6 +28,8 @@ impl fmt::Display for Error {
             Error::ParseIntError(err) => f.write_fmt(format_args!("Parse error: {}", err)),
             Error::ToStringError(err) => f.write_fmt(format_args!("ToString error: {}", err)),
             Error::BadOpCode(code) => f.write_fmt(format_args!("Bad op code: {}", code)),
+            Error::BadParamMode(mode) => f.write_fmt(format_args!("Bad parameter mode: {}", mode)),
+            Error::ExecError => f.write_str("Exec error"),
             Error::NomParseError => f.write_str("Parse error"),
         }
     }
@@ -50,7 +54,7 @@ impl From<std::string::FromUtf8Error> for Error {
 }
 
 impl<T> From<nom::Err<T>> for Error {
-    fn from(err: nom::Err<T>) -> Error {
+    fn from(_err: nom::Err<T>) -> Error {
         Error::NomParseError
     }
 }
@@ -65,7 +69,7 @@ pub fn parse_i32(line: std::io::Result<String>) -> Result<i32> {
 
 pub fn to_i32(buf: Vec<u8>) -> Result<i32> {
     let s = String::from_utf8(buf)?;
-    let i = s.parse::<i32>()?;
+    let i = s.trim().parse::<i32>()?;
     Ok(i)
 }
 
