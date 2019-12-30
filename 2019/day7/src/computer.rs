@@ -1,23 +1,21 @@
 use aoc;
+use crossbeam::crossbeam_channel::{unbounded, Receiver, Sender};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::sync::mpsc;
 
 #[derive(Debug)]
 struct IO {
-    input_rx: mpsc::Receiver<i32>,
-    output_tx: mpsc::Sender<i32>,
+    input_rx: Receiver<i32>,
+    output_tx: Sender<i32>,
 }
 
 impl IO {
     fn read(&mut self) -> i32 {
         self.input_rx.recv().unwrap()
-        //block_on(async{ self.input_rx.next().await.unwrap()})
     }
 
     fn write(&mut self, val: i32) {
         self.output_tx.send(val).unwrap()
-        //block_on(async{ self.output_tx.send(val).await.unwrap()})
     }
 }
 
@@ -42,11 +40,8 @@ pub fn load_input(input_file: &str) -> aoc::Result<Vec<i32>> {
         .collect()
 }
 
-pub fn new(
-    initial_state: &Vec<i32>,
-    input_rx: mpsc::Receiver<i32>,
-) -> (Computer, mpsc::Receiver<i32>) {
-    let (output_tx, output_rx) = mpsc::channel();
+pub fn new(initial_state: &Vec<i32>, input_rx: Receiver<i32>) -> (Computer, Receiver<i32>) {
+    let (output_tx, output_rx) = unbounded();
 
     (
         Computer {
@@ -63,11 +58,6 @@ pub fn new(
 }
 
 impl Computer {
-    pub fn reset(&mut self) {
-        self.memory = self.initial_state.clone();
-        self.ptr = 0;
-    }
-
     pub fn run(&mut self) -> i32 {
         loop {
             let op = self.next_op();
@@ -76,7 +66,9 @@ impl Computer {
                     Action::Write(dest, val) => self.memory[dest] = val,
                     Action::MoveRel(slots) => self.ptr += slots,
                     Action::MoveAbs(dest) => self.ptr = dest,
-                    Action::Halt => return self.memory[0],
+                    Action::Halt => {
+                        return self.memory[0];
+                    }
                 }
             }
         }

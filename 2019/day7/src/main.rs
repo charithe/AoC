@@ -3,15 +3,19 @@ mod computer;
 
 fn main() -> aoc::Result<()> {
     let initial_state = computer::load_input("input")?;
-    let (s, p) = largest(&initial_state);
-    println!("{:?} => {}", p, s);
+
+    let (s, p) = largest(&initial_state, vec![0, 1, 2, 3, 4]);
+    println!("Part1: {:?} => {}", p, s);
+
+    let (s, p) = largest(&initial_state, vec![5, 6, 7, 8, 9]);
+    println!("Part2: {:?} => {}", p, s);
 
     Ok(())
 }
 
-fn largest(initial_state: &Vec<i32>) -> (i32, Vec<i32>) {
-    let mut amp_group = amplifier::AmplifierGroup::new(&initial_state, 5);
-    let phase_settings = PhaseSettings::new(vec![0, 1, 2, 3, 4]);
+fn largest(initial_state: &Vec<i32>, phase_range: Vec<i32>) -> (i32, Vec<i32>) {
+    let mut amp_group = amplifier::AmplifierGroup::new(&initial_state);
+    let phase_settings = PhaseSettings::new(phase_range);
 
     let mut largest_signal = 0;
     let mut largest_phase: Vec<i32> = Vec::new();
@@ -72,7 +76,7 @@ fn test_largest1() {
         0, 0,
     ];
 
-    let (s, p) = largest(&initial_state);
+    let (s, p) = largest(&initial_state, vec![0, 1, 2, 3, 4]);
     assert_eq!(s, 54321);
     assert_eq!(p, vec![0, 1, 2, 3, 4]);
 }
@@ -83,7 +87,7 @@ fn test_largest2() {
         3, 15, 3, 16, 1002, 16, 10, 16, 1, 16, 15, 15, 4, 15, 99, 0, 0,
     ];
 
-    let (s, p) = largest(&initial_state);
+    let (s, p) = largest(&initial_state, vec![0, 1, 2, 3, 4]);
     println!("{:?} => {}", p, s);
     assert_eq!(s, 43210);
     assert_eq!(p, vec![4, 3, 2, 1, 0]);
@@ -96,76 +100,35 @@ fn test_largest3() {
         31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0,
     ];
 
-    let (s, p) = largest(&initial_state);
+    let (s, p) = largest(&initial_state, vec![0, 1, 2, 3, 4]);
     println!("{:?} => {}", p, s);
     assert_eq!(s, 65210);
     assert_eq!(p, vec![1, 0, 4, 3, 2]);
 }
 
-/*
-use crossbeam::crossbeam_channel::bounded;
-use std::thread;
-fn largest(initial_state: &Vec<i32>) -> (i32, Vec<i32>) {
-    let (phase_tx, phase_rx) = bounded(32);
-    thread::spawn(move || {
-        for a in 0..=4 {
-            for b in 0..=4 {
-                for c in 0..=4 {
-                    for d in 0..=4 {
-                        for e in 0..=4 {
-                            let phases = vec![a, b, c, d, e];
-                            phase_tx.send(phases).unwrap()
-                        }
-                    }
-                }
-            }
-        }
-        drop(phase_tx);
-    });
+#[test]
+fn test_feedback_loop1() {
+    let initial_state = vec![
+        3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26, 27, 4, 27, 1001, 28, -1, 28,
+        1005, 28, 6, 99, 0, 0, 5,
+    ];
 
-    let initial_state = computer::load_input("input")?;
-    let mut amp_group = amplifier::AmplifierGroup::new(&initial_state, 5);
-    let mut largest_signal = 0;
-    for phase in phase_rx.iter() {
-        let signal = amp_group.execute(&phase);
-        if signal > largest_signal {
-            largest_signal = signal;
-        }
-    }
-
-    println!("Largest: {}", largest_signal);
-
-
-        let initial_state = computer::load_input("input")?;
-        let (signal_tx, signal_rx) = bounded(32);
-
-        for _i in 0..10 {
-            let (phase_recv, signal_send) = (phase_rx.clone(), signal_tx.clone());
-            let mut amp_group = amplifier::AmplifierGroup::new(&initial_state, 5);
-            thread::spawn(move || {
-                for phase in phase_recv.iter() {
-                    let signal = amp_group.execute(&phase);
-                    signal_send.send((signal, phase)).unwrap();
-                }
-                drop(signal_send);
-            });
-        }
-        drop(signal_tx);
-
-        let mut largest_signal = 0;
-        let mut largest_phase: Vec<i32> = Vec::new();
-
-        for (s, p) in signal_rx.iter() {
-            println!("{} {} {}", s, largest_signal, s > largest_signal);
-            if s > largest_signal {
-                largest_signal = s;
-                largest_phase = p.clone();
-            }
-        }
-
-        println!(
-            "Largest phase settings: {} -> {:?}",
-            largest_signal, largest_phase
-        );
+    let (s, p) = largest(&initial_state, vec![5, 6, 7, 8, 9]);
+    println!("{:?} => {}", p, s);
+    assert_eq!(s, 139629729);
+    assert_eq!(p, vec![9, 8, 7, 6, 5]);
 }
-*/
+
+#[test]
+fn test_feedback_loop2() {
+    let initial_state = vec![
+        3, 52, 1001, 52, -5, 52, 3, 53, 1, 52, 56, 54, 1007, 54, 5, 55, 1005, 55, 26, 1001, 54, -5,
+        54, 1105, 1, 12, 1, 53, 54, 53, 1008, 54, 0, 55, 1001, 55, 1, 55, 2, 53, 55, 53, 4, 53,
+        1001, 56, -1, 56, 1005, 56, 6, 99, 0, 0, 0, 0, 10,
+    ];
+
+    let (s, p) = largest(&initial_state, vec![5, 6, 7, 8, 9]);
+    println!("{:?} => {}", p, s);
+    assert_eq!(s, 18216);
+    assert_eq!(p, vec![9, 7, 8, 5, 6]);
+}
