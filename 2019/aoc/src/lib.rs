@@ -73,6 +73,12 @@ pub fn to_i32(buf: Vec<u8>) -> Result<i32> {
     Ok(i)
 }
 
+pub fn to_i64(buf: Vec<u8>) -> Result<i64> {
+    let s = String::from_utf8(buf)?;
+    let i = s.trim().parse::<i64>()?;
+    Ok(i)
+}
+
 pub fn parse_line<T, F>(convert: F) -> impl Fn(std::io::Result<String>) -> Result<T>
 where
     F: Fn(String) -> Result<T>,
